@@ -14,6 +14,12 @@ const urlDatabase = {
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
+
+app.get("/urls/:id", (req, res) => {
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  res.render("urls_show", templateVars);
+});
+
 // this is a reference........... check compatability with the urls.json beneath
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
