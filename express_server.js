@@ -70,6 +70,13 @@ app.post("/urls", (req, res) => {
   // res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
+app.post("/urls/:id/delete", (req, res) => {
+  const id = req.params.id; // Capture the short url to be deleted
+  // console.log('delete button sends:', id); // Print the short url
+  delete urlDatabase[id]; // delete the resource from the database object  
+  res.redirect("/urls"); // redirect back to same page to show refreshed data
+});
+
 ////////////////////////////////////////////////////////////////////////////////
 // Listener
 ////////////////////////////////////////////////////////////////////////////////
