@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 8080; // Default port 8080
 
 app.set("view engine", "ejs");
 
@@ -9,13 +9,12 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-// create a random string of alphanumeric characters
+// Create a random string of alphanumeric characters
 const generateRandomString = function(nbChars = 6) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
-
-  for (let i = 0; i < nbChars; i++ ) {
-    result += chars.charAt(Math.floor(Math.random()*chars.length));
+  for (let i = 0; i < nbChars; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 };
@@ -32,6 +31,12 @@ app.use(express.urlencoded({ extended: true }));
 ////////////////////////////////////////////////////////////////////////////////
 app.get("/", (req, res) => {
   res.send("Hello!");
+});
+
+app.get("/u/:id", (req, res) => {
+  const shortURL = req.params.id; // Get the short url
+  const longURL = urlDatabase[shortURL];
+  res.redirect(longURL);
 });
 
 app.get("/urls/new", (req, res) => {
@@ -59,7 +64,10 @@ app.get("/hello", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  const shortURL = generateRandomString(6); // Generate a new short id
+  urlDatabase[shortURL] = req.body['longURL']; // Add key-value pair to database object
+  res.redirect(`/urls/${shortURL}`);
+  // res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
 ////////////////////////////////////////////////////////////////////////////////
