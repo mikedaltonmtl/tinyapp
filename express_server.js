@@ -1,8 +1,15 @@
 const express = require("express");
+const morgan = require('morgan');
+
 const app = express();
 const PORT = 8080; // Default port 8080
 
 app.set("view engine", "ejs");
+
+// parse the body of a POST request (from a 'buffer') to make it human readable
+app.use(express.urlencoded({ extended: true }));
+
+app.use(morgan('dev'));
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -18,13 +25,6 @@ const generateRandomString = function(nbChars = 6) {
   }
   return result;
 };
-
-////////////////////////////////////////////////////////////////////////////////
-// Middleware
-////////////////////////////////////////////////////////////////////////////////
-
-// parse the body of a POST request (from a 'buffer') to make it readable
-app.use(express.urlencoded({ extended: true }));
 
 ////////////////////////////////////////////////////////////////////////////////
 // Route Handlers - GET
