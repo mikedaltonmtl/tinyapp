@@ -27,7 +27,7 @@ const generateRandomString = function(nbChars = 6) {
 app.use(express.urlencoded({ extended: true }));
 
 ////////////////////////////////////////////////////////////////////////////////
-// Route Handlers
+// Route Handlers - GET
 ////////////////////////////////////////////////////////////////////////////////
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -48,7 +48,6 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-// this is a reference........... check compatability with the urls.json beneath
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
@@ -62,19 +61,31 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+////////////////////////////////////////////////////////////////////////////////
+// Route Handlers - POST
+////////////////////////////////////////////////////////////////////////////////
+
+// Create - add new resourse to database object
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
   const shortURL = generateRandomString(6); // Generate a new short id
   urlDatabase[shortURL] = req.body['longURL']; // Add key-value pair to database object
   res.redirect(`/urls/${shortURL}`);
-  // res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
+// Delete - remove resourxe from database object
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id; // Capture the short url to be deleted
-  // console.log('delete button sends:', id); // Print the short url
-  delete urlDatabase[id]; // delete the resource from the database object  
-  res.redirect("/urls"); // redirect back to same page to show refreshed data
+  delete urlDatabase[id]; // Delete the resource from the database object  
+  res.redirect("/urls"); // Redirect back to same page to show refreshed data
+});
+
+// Update - modify long URL of existing resource
+app.post("/urls/:id/update", (req, res) => {
+  const id = req.params.id;
+  const newLongURL = req.body.longURL;
+  urlDatabase[id] = newLongURL; // Modify the database object
+  res.redirect("/urls"); // Redirect to urls page to show updated data
 });
 
 ////////////////////////////////////////////////////////////////////////////////
