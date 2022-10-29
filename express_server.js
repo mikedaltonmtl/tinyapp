@@ -78,7 +78,7 @@ app.post("/urls", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id; // Capture the short url to be deleted
   delete urlDatabase[id]; // Delete the resource from the database object  
-  res.redirect("/urls"); // Redirect back to same page to show refreshed data
+  res.redirect("/urls"); // Redirect to index page to show updated data
 });
 
 // Update - modify long URL of existing resource
@@ -87,6 +87,13 @@ app.post("/urls/:id/update", (req, res) => {
   const newLongURL = req.body.longURL;
   urlDatabase[id] = newLongURL; // Modify the database object
   res.redirect("/urls"); // Redirect to urls page to show updated data
+});
+
+// Login - user supplied username
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  res.cookie('username', username);
+  res.redirect("/urls");
 });
 
 ////////////////////////////////////////////////////////////////////////////////
