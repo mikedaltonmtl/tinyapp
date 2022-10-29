@@ -9,8 +9,8 @@ app.set("view engine", "ejs");
 
 // parse the body of a POST request (from a 'buffer') to make it human readable
 app.use(express.urlencoded({ extended: true }));
-
 app.use(morgan('dev'));
+app.use(cookieParser());
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -41,16 +41,27 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const username = req.cookies["username"] ? req.cookies["username"] : false;
+  const templateVars = { username };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const username = req.cookies["username"] ? req.cookies["username"] : false;
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    username
+  };
   res.render("urls_show", templateVars);
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const username = req.cookies["username"] ? req.cookies["username"] : false;
+  const templateVars = {
+    urls: urlDatabase,
+    username
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -77,7 +88,7 @@ app.post("/urls", (req, res) => {
 // Delete - remove resourxe from database object
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id; // Capture the short url to be deleted
-  delete urlDatabase[id]; // Delete the resource from the database object  
+  delete urlDatabase[id]; // Delete the resource from the database object
   res.redirect("/urls"); // Redirect to index page to show updated data
 });
 
@@ -93,6 +104,12 @@ app.post("/urls/:id/update", (req, res) => {
 app.post("/login", (req, res) => {
   const username = req.body.username;
   res.cookie('username', username);
+  res.redirect("/urls");
+});
+
+// Logout - clear cookie
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
   res.redirect("/urls");
 });
 
