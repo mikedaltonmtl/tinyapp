@@ -40,6 +40,12 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+app.get("/urls/register", (req, res) => {
+  const username = req.cookies["username"] ? req.cookies["username"] : false;
+  const templateVars = { username };
+  res.render("urls_register", templateVars);
+});
+
 app.get("/urls/new", (req, res) => {
   const username = req.cookies["username"] ? req.cookies["username"] : false;
   const templateVars = { username };
