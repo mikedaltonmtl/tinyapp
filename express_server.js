@@ -17,6 +17,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
 // Create a random string of alphanumeric characters
 const generateRandomString = function(nbChars = 6) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -40,9 +53,9 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
-app.get("/urls/register", (req, res) => {
-  const username = req.cookies["username"] ? req.cookies["username"] : false;
-  const templateVars = { username };
+app.get("/register", (req, res) => {
+  const user = req.cookies["user_id"] ? users[user_id] : false;
+  const templateVars = { user };
   res.render("urls_register", templateVars);
 });
 
@@ -85,7 +98,6 @@ app.get("/hello", (req, res) => {
 
 // Create - add new resourse to database object
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
   const shortURL = generateRandomString(6); // Generate a new short id
   urlDatabase[shortURL] = req.body['longURL']; // Add key-value pair to database object
   res.redirect(`/urls/${shortURL}`);
@@ -116,6 +128,21 @@ app.post("/login", (req, res) => {
 // Logout - clear cookie
 app.post("/logout", (req, res) => {
   res.clearCookie('username');
+  res.redirect("/urls");
+});
+
+// Register - create new user
+app.post("/register", (req, res) => {
+  const id = generateRandomString(6); // Generate a new (random) user id
+  const email = req.body['email'];
+  const password = req.body['password'];
+  // add user to user database object
+  users[id] = {
+    id,
+    email,
+    password
+  };
+  res.cookie('user_id', id);
   res.redirect("/urls");
 });
 
