@@ -14,7 +14,7 @@ app.use(cookieParser());
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "9sm5xK": "http://www.google.com",
 };
 
 const users = {
@@ -54,33 +54,35 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const user = req.cookies["user_id"] ? users[user_id] : false;
+  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
   const templateVars = { user };
   res.render("urls_register", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const username = req.cookies["username"] ? req.cookies["username"] : false;
-  const templateVars = { username };
+  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  const templateVars = { user };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
-  const username = req.cookies["username"] ? req.cookies["username"] : false;
+  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username
+    user,
   };
   res.render("urls_show", templateVars);
 });
 
 app.get("/urls", (req, res) => {
-  const username = req.cookies["username"] ? req.cookies["username"] : false;
+  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
   const templateVars = {
     urls: urlDatabase,
-    username
+    user,
   };
+  console.log('user', user, 'user_id', req.cookies["user_id"]);
+  console.log('users', users);
   res.render("urls_index", templateVars);
 });
 
@@ -140,7 +142,7 @@ app.post("/register", (req, res) => {
   users[id] = {
     id,
     email,
-    password
+    password,
   };
   res.cookie('user_id', id);
   res.redirect("/urls");
