@@ -30,6 +30,23 @@ const users = {
   },
 };
 
+/**
+ * Function will search users object for given email
+ * If email is found, the user (object) will be returned
+ * If email is not found, function will return NULL
+ */
+ const findUserByEmail = function(email) {
+  for (const userId in users) {
+    // additional filter for object properties:
+    if (users.hasOwnProperty(userId)) {
+      if (users[userId]['email'] === email ) {
+        return users[userId];
+      }
+    }
+  }
+  return null;
+};
+
 // Create a random string of alphanumeric characters
 const generateRandomString = function(nbChars = 6) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -81,8 +98,8 @@ app.get("/urls", (req, res) => {
     urls: urlDatabase,
     user,
   };
-  console.log('user', user, 'user_id', req.cookies["user_id"]);
-  console.log('users', users);
+  // console.log('user', user, 'user_id', req.cookies["user_id"]);
+  // console.log('users', users);
   res.render("urls_index", templateVars);
 });
 
@@ -135,15 +152,33 @@ app.post("/logout", (req, res) => {
 
 // Register - create new user
 app.post("/register", (req, res) => {
+
+  console.log('users before:', users);
+
+  // return status 400 if email or password fields are blank
+  if (req.body['email'] === "" || req.body['password'] === "") {
+    res.status(400);
+    res.send('Please provide an email & password');
+    return;
+  }
+  // return status 400 if email already exists in users object
+  if (findUserByEmail(req.body['email']) !== null) {
+    res.status(400);
+    res.send('Email already exists');
+    return;
+  }
+  // add user to user database object
   const id = generateRandomString(6); // Generate a new (random) user id
   const email = req.body['email'];
   const password = req.body['password'];
-  // add user to user database object
   users[id] = {
     id,
     email,
     password,
   };
+
+  console.log('users after:', users);
+
   res.cookie('user_id', id);
   res.redirect("/urls");
 });
