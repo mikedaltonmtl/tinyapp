@@ -44,7 +44,7 @@ const getUserByEmail = function(email) {
   return null;
 };
 
-// Create a random string of alphanumeric characters
+// Create a random string of alphanumeric characters, of length 'nbChars'
 const generateRandomString = function(nbChars = 6) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -65,6 +65,12 @@ app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id; // Get the short url
   const longURL = urlDatabase[shortURL];
   res.redirect(longURL);
+});
+
+app.get("/login", (req, res) => {
+  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  const templateVars = { user };
+  res.render("urls_login", templateVars);
 });
 
 app.get("/register", (req, res) => {
@@ -95,8 +101,6 @@ app.get("/urls", (req, res) => {
     urls: urlDatabase,
     user,
   };
-  // console.log('user', user, 'user_id', req.cookies["user_id"]);
-  // console.log('users', users);
   res.render("urls_index", templateVars);
 });
 
@@ -134,16 +138,9 @@ app.post("/urls/:id/update", (req, res) => {
   res.redirect("/urls"); // Redirect to urls page to show updated data
 });
 
-// Login - user supplied username
-app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie('username', username);
-  res.redirect("/urls");
-});
-
 // Logout - clear cookie
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect("/urls");
 });
 
@@ -171,6 +168,26 @@ app.post("/register", (req, res) => {
     password,
   };
   res.cookie('user_id', id);
+  res.redirect("/urls");
+});
+
+// Login - login to an existing account
+app.post("/login", (req, res) => {
+  const user = getUserByEmail(req.body['email']);
+  // return status 403 if email not found in users object
+  if (user === null) {
+    res.status(403);
+    res.send('Email cannot be found');
+    return;
+  }
+  // return status 403 if email exists, but password does not match
+  if (req.body['password'] !== user.password) {
+    res.status(403);
+    res.send('Incorrect password');
+    return;
+  }
+  // set cookie for logged in user
+  res.cookie('user_id', user.id);
   res.redirect("/urls");
 });
 
