@@ -16,15 +16,19 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <a class="nav-item nav-link" href="/register">Register</a>
-        <a class="nav-item nav-link" href="/login">Login</a>
-
+      </div>
+    </div>
+    <div class="collapse navbar-collapse  justify-content-end" id="navbarNavAltMarkup">
+      <div class="navbar-nav">
         <!-- User has signed-in -->
         <% if (user) { %>
           <form class="form-inline my-2 my-lg-0" action="/logout" method="POST">
             <div class="nav-item" style="margin: 0px 5px 0px 50px">Logged in as: <%= user['email'] %></div>
             <button type="submit" class="btn btn-outline-dark btn-sm">Logout</button>
           </form>
+        <% } else { %><!-- User NOT signed-in -->
+          <a class="nav-item nav-link" href="/login">Login</a>
+          <a class="nav-item nav-link" href="/register">Register</a>
         <% } %><!-- end: if (user) -->
       </div>
     </div>

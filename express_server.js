@@ -141,7 +141,7 @@ app.post("/urls/:id/update", (req, res) => {
 // Logout - clear cookie
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 // Register - create new user
