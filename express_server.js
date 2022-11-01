@@ -91,6 +91,9 @@ app.get("/register", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
   const templateVars = { user };
+  if (!user) { // user not logged-in, redirect to login
+    res.redirect("/login");
+  }
   res.render("urls_new", templateVars);
 });
 
@@ -127,6 +130,12 @@ app.get("/hello", (req, res) => {
 
 // Create - add new resourse to database object
 app.post("/urls", (req, res) => {
+  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  if (!user) { // user not logged-in, do not allow
+    res.send('Please log in or create an account before adding a short URL');
+    return;
+  }
+  // user IS logged in, add new URL
   const shortURL = generateRandomString(6); // Generate a new short id
   urlDatabase[shortURL] = req.body['longURL']; // Add key-value pair to database object
   res.redirect(`/urls/${shortURL}`);
@@ -158,13 +167,13 @@ app.post("/register", (req, res) => {
   // return status 400 if email or password fields are blank
   if (req.body['email'] === "" || req.body['password'] === "") {
     res.status(400);
-    res.send('Please provide an email & password');
+    res.send('Please provide an email & password\n<button onclick="history.back()">Back</button>');
     return;
   }
   // return status 400 if email already exists in users object
   if (getUserByEmail(req.body['email']) !== null) {
     res.status(400);
-    res.send('Email already exists');
+    res.send('Email already exists\n<button onclick="history.back()">Back</button>');
     return;
   }
   // add user to user database object
@@ -186,13 +195,13 @@ app.post("/login", (req, res) => {
   // return status 403 if email not found in users object
   if (user === null) {
     res.status(403);
-    res.send('Email cannot be found');
+    res.send('Email cannot be found\n<button onclick="history.back()">Back</button>');
     return;
   }
   // return status 403 if email exists, but password does not match
   if (req.body['password'] !== user.password) {
     res.status(403);
-    res.send('Incorrect password');
+    res.send('Incorrect password\n<button onclick="history.back()">Back</button>');
     return;
   }
   // set cookie for logged in user
