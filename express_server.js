@@ -73,12 +73,18 @@ app.get("/u/:id", (req, res) => {
 app.get("/login", (req, res) => {
   const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
   const templateVars = { user };
+  if (user) { // user already logged-in, redirect to index
+    res.redirect("/urls");
+  }
   res.render("urls_login", templateVars);
 });
 
 app.get("/register", (req, res) => {
   const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
   const templateVars = { user };
+  if (user) { // user already logged-in, redirect to index
+    res.redirect("/urls");
+  }
   res.render("urls_register", templateVars);
 });
 
