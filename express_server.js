@@ -14,10 +14,21 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(cookieParser());
-
+/*
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
+};
+*/
+const urlDatabase = {
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 const users = {
@@ -66,7 +77,11 @@ app.get("/", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id; // Get the short url
-  const longURL = urlDatabase[shortURL];
+  if (!urlDatabase[shortURL]) { // Short url does not exist in database object
+    res.send('Sorry, this short URL doesn\'t exist\n<button onclick="history.back()">Back</button>');
+    return;
+  }
+  const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -101,7 +116,7 @@ app.get("/urls/:id", (req, res) => {
   const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
     user,
   };
   res.render("urls_show", templateVars);
@@ -131,13 +146,15 @@ app.get("/hello", (req, res) => {
 // Create - add new resourse to database object
 app.post("/urls", (req, res) => {
   const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
-  if (!user) { // user not logged-in, do not allow
+  if (!user) { // user NOT logged-in, do not allow
     res.send('Please log in or create an account before adding a short URL');
     return;
   }
   // user IS logged in, add new URL
   const shortURL = generateRandomString(6); // Generate a new short id
-  urlDatabase[shortURL] = req.body['longURL']; // Add key-value pair to database object
+  urlDatabase[shortURL]= {
+    longURL: req.body['longURL'], // Add resource to database object
+  };
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -152,7 +169,7 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/urls/:id/update", (req, res) => {
   const id = req.params.id;
   const newLongURL = req.body.longURL;
-  urlDatabase[id] = newLongURL; // Modify the database object
+  urlDatabase[id].longURL = newLongURL; // Modify the database object
   res.redirect("/urls"); // Redirect to urls page to show updated data
 });
 
