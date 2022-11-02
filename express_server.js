@@ -2,6 +2,7 @@ const express = require("express");
 const morgan = require('morgan');
 const bcrypt = require("bcryptjs");
 const cookieSession = require('cookie-session');
+const { getUserByEmail } = require('./helpers.js');
 
 ////////////////////////////////////////////////////////////////////////////////
 // Configuration
@@ -66,15 +67,6 @@ const users = {
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
-// Function returns user (object) if email is found or NULL if not
-const getUserByEmail = function(email, database) {
-  for (const userId of Object.keys(database)) {
-    if (users[userId]['email'] === email) {
-      return users[userId];
-    }
-  }
-  return null;
-};
 
 // Create a random string of alphanumeric characters, of length 'nbChars'
 const generateRandomString = function(nbChars = 6) {
