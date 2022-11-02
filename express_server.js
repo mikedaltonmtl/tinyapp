@@ -19,8 +19,7 @@ app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
-  keys: [/* secret keys */],
-
+  keys: ['key1', 'key2'],
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
@@ -116,7 +115,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   const templateVars = { user };
   if (user) { // user already logged-in, redirect to index
     res.redirect("/urls");
@@ -125,7 +124,7 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   const templateVars = { user };
   if (user) { // user already logged-in, redirect to index
     res.redirect("/urls");
@@ -134,7 +133,7 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   const templateVars = { user };
   if (!user) { // user not logged-in, redirect to login
     res.redirect("/login");
@@ -143,14 +142,14 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   if (!user) { // user NOT logged-in, do not allow
     res.send('Please <a href="/login">log-in</a> or <a href="/register">register</a> to continue.');
     return;
   }
   const shortURL = req.params.id;
   if (!urlDatabase[shortURL]) { // Short url does not exist in database object
-    res.status(404).send(`Short URL ${shortURL} does not exist.\n`)
+    res.status(404).send(`Short URL ${shortURL} does not exist.\n`);
     return;
   }
   const urlOwnerId = urlDatabase[req.params.id].userID;
@@ -168,7 +167,7 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   if (!user) { // user is not logged in
     res.send('Please <a href="/login">log-in</a> or <a href="/register">register</a> to continue.');
     return;
@@ -195,7 +194,7 @@ app.get("/hello", (req, res) => {
 
 // Create - add new URL to database object
 app.post("/urls", (req, res) => {
-  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   if (!user) { // user NOT logged-in, do not allow
     res.send('Please <a href="/login">log-in</a> or <a href="/register">register</a> to add a URL');
     return;
@@ -213,10 +212,10 @@ app.post("/urls", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id;
   if (!urlDatabase[shortURL]) { // Short url does not exist in database object
-    res.status(404).send(`Short URL ${shortURL} does not exist.\n`)
+    res.status(404).send(`Short URL ${shortURL} does not exist.\n`);
     return;
   }
-  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   if (!user) { // user NOT logged-in, do not allow
     res.status(401).send('You must log in to remove a URL\n');
     return;
@@ -235,10 +234,10 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/urls/:id/update", (req, res) => {
   const shortURL = req.params.id;
   if (!urlDatabase[shortURL]) { // Short url does not exist in database object
-    res.status(404).send(`Short URL ${shortURL} does not exist.\n`)
+    res.status(404).send(`Short URL ${shortURL} does not exist.\n`);
     return;
   }
-  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   if (!user) { // user NOT logged-in, do not allow
     res.status(401).send('You must log in to edit a URL\n');
     return;
@@ -254,9 +253,9 @@ app.post("/urls/:id/update", (req, res) => {
   res.redirect("/urls");
 });
 
-// Logout - clear cookie
+// Logout - clear session
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect("/login");
 });
 
@@ -284,7 +283,7 @@ app.post("/register", (req, res) => {
     email,
     password: hashedPassword,
   };
-  res.cookie('user_id', id);
+  req.session['user_id'] = id;
   res.redirect("/urls");
 });
 
@@ -304,7 +303,7 @@ app.post("/login", (req, res) => {
     return;
   }
   // set cookie for logged in user
-  res.cookie('user_id', user.id);
+  req.session['user_id'] = id;
   res.redirect("/urls");
 });
 
