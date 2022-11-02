@@ -1,6 +1,7 @@
 const express = require("express");
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Configuration
@@ -186,7 +187,7 @@ app.get("/hello", (req, res) => {
 // Route Handlers - POST
 ////////////////////////////////////////////////////////////////////////////////
 
-// Create - add new resourse to database object
+// Create - add new URL to database object
 app.post("/urls", (req, res) => {
   const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
   if (!user) { // user NOT logged-in, do not allow
@@ -202,20 +203,18 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// Delete - remove resource from database object
+// Delete - remove URL from database object
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id;
   if (!urlDatabase[shortURL]) { // Short url does not exist in database object
     res.status(404).send(`Short URL ${shortURL} does not exist.\n`)
     return;
   }
-
   const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
   if (!user) { // user NOT logged-in, do not allow
     res.status(401).send('You must log in to remove a URL\n');
     return;
   }
-
   const urlOwnerId = urlDatabase[req.params.id].userID;
   const cookieUserId = user.id;
   if (urlOwnerId !== cookieUserId) { // user is not owner of short URL
@@ -233,13 +232,11 @@ app.post("/urls/:id/update", (req, res) => {
     res.status(404).send(`Short URL ${shortURL} does not exist.\n`)
     return;
   }
-
   const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
   if (!user) { // user NOT logged-in, do not allow
     res.status(401).send('You must log in to edit a URL\n');
     return;
   }
-
   const urlOwnerId = urlDatabase[req.params.id].userID;
   const cookieUserId = user.id;
   if (urlOwnerId !== cookieUserId) { // user is not owner of short URL
@@ -275,16 +272,17 @@ app.post("/register", (req, res) => {
   const id = generateRandomString(6); // Generate a new (random) user id
   const email = req.body['email'];
   const password = req.body['password'];
+  const hashedPassword = bcrypt.hashSync(password, 10);
   users[id] = {
     id,
     email,
-    password,
+    password: hashedPassword,
   };
   res.cookie('user_id', id);
   res.redirect("/urls");
 });
 
-// Login - login to an existing account
+// Login - sign in to an existing account
 app.post("/login", (req, res) => {
   const user = getUserByEmail(req.body['email']);
   // return status 403 if email not found in users object
@@ -294,7 +292,7 @@ app.post("/login", (req, res) => {
     return;
   }
   // return status 403 if email exists, but password does not match
-  if (req.body['password'] !== user.password) {
+  if (!bcrypt.compareSync(req.body['password'], user.password)) {
     res.status(403);
     res.send('Incorrect password\n<button onclick="history.back()">Back</button>');
     return;
