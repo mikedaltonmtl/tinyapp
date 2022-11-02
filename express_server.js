@@ -141,6 +141,11 @@ app.get("/urls/:id", (req, res) => {
     res.send('Please <a href="/login">log-in</a> or <a href="/register">register</a> to continue.');
     return;
   }
+  const shortURL = req.params.id;
+  if (!urlDatabase[shortURL]) { // Short url does not exist in database object
+    res.status(404).send(`Short URL ${shortURL} does not exist.\n`)
+    return;
+  }
   const urlOwnerId = urlDatabase[req.params.id].userID;
   const cookieUserId = user.id;
   if (urlOwnerId !== cookieUserId) { // user is not owner of short URL
@@ -197,18 +202,52 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// Delete - remove resourxe from database object
+// Delete - remove resource from database object
 app.post("/urls/:id/delete", (req, res) => {
-  const id = req.params.id;
-  delete urlDatabase[id];
+  const shortURL = req.params.id;
+  if (!urlDatabase[shortURL]) { // Short url does not exist in database object
+    res.status(404).send(`Short URL ${shortURL} does not exist.\n`)
+    return;
+  }
+
+  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  if (!user) { // user NOT logged-in, do not allow
+    res.status(401).send('You must log in to remove a URL\n');
+    return;
+  }
+
+  const urlOwnerId = urlDatabase[req.params.id].userID;
+  const cookieUserId = user.id;
+  if (urlOwnerId !== cookieUserId) { // user is not owner of short URL
+    res.status(403).send('Sorry, you cannot delete a URL you did not create.\n');
+    return;
+  }
+  delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
 
 // Update - modify long URL of existing resource
 app.post("/urls/:id/update", (req, res) => {
-  const id = req.params.id;
+  const shortURL = req.params.id;
+  if (!urlDatabase[shortURL]) { // Short url does not exist in database object
+    res.status(404).send(`Short URL ${shortURL} does not exist.\n`)
+    return;
+  }
+
+  const user = req.cookies["user_id"] ? users[req.cookies["user_id"]] : false;
+  if (!user) { // user NOT logged-in, do not allow
+    res.status(401).send('You must log in to edit a URL\n');
+    return;
+  }
+
+  const urlOwnerId = urlDatabase[req.params.id].userID;
+  const cookieUserId = user.id;
+  if (urlOwnerId !== cookieUserId) { // user is not owner of short URL
+    res.status(403).send('Sorry, you cannot edit a URL you did not create.\n');
+    return;
+  }
   const newLongURL = req.body.longURL;
-  urlDatabase[id].longURL = newLongURL;
+  urlDatabase[shortURL].longURL = newLongURL;
   res.redirect("/urls");
 });
 
