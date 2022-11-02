@@ -3,7 +3,7 @@ const morgan = require('morgan');
 const bcrypt = require("bcryptjs");
 const cookieSession = require('cookie-session');
 const { getUserByEmail } = require('./helpers.js');
-
+const methodOverride = require('method-override');
 ////////////////////////////////////////////////////////////////////////////////
 // Configuration
 ////////////////////////////////////////////////////////////////////////////////
@@ -24,6 +24,7 @@ app.use(cookieSession({
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
+app.use(methodOverride('_method'));
 
 ////////////////////////////////////////////////////////////////////////////////
 // Data
