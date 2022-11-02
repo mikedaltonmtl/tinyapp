@@ -67,8 +67,8 @@ const users = {
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
 // Function returns user (object) if email is found or NULL if not
-const getUserByEmail = function(email) {
-  for (const userId of Object.keys(users)) {
+const getUserByEmail = function(email, database) {
+  for (const userId of Object.keys(database)) {
     if (users[userId]['email'] === email) {
       return users[userId];
     }
@@ -268,7 +268,7 @@ app.post("/register", (req, res) => {
     return;
   }
   // return status 400 if email already exists in users object
-  if (getUserByEmail(req.body['email']) !== null) {
+  if (getUserByEmail(req.body['email'], users) !== null) {
     res.status(400);
     res.send('Email already exists\n<button onclick="history.back()">Back</button>');
     return;
@@ -289,7 +289,7 @@ app.post("/register", (req, res) => {
 
 // Login - sign in to an existing account
 app.post("/login", (req, res) => {
-  const user = getUserByEmail(req.body['email']);
+  const user = getUserByEmail(req.body['email'], users);
   // return status 403 if email not found in users object
   if (user === null) {
     res.status(403);
@@ -303,7 +303,7 @@ app.post("/login", (req, res) => {
     return;
   }
   // set cookie for logged in user
-  req.session['user_id'] = id;
+  req.session['user_id'] = user.id;
   res.redirect("/urls");
 });
 
