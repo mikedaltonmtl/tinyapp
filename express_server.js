@@ -1,7 +1,8 @@
 const express = require("express");
 const morgan = require('morgan');
-const cookieParser = require('cookie-parser');
+// const cookieParser = require('cookie-parser');
 const bcrypt = require("bcryptjs");
+const cookieSession = require('cookie-session');
 
 ////////////////////////////////////////////////////////////////////////////////
 // Configuration
@@ -15,9 +16,16 @@ app.set("view engine", "ejs");
 // Middleware
 ////////////////////////////////////////////////////////////////////////////////
 app.use(morgan('dev'));
-app.use(cookieParser());
+// app.use(cookieParser());
 // parse the body of a POST request (from a 'buffer') to make it human readable
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieSession({
+  name: 'session',
+  keys: [/* secret keys */],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
 
 ////////////////////////////////////////////////////////////////////////////////
 // Data
