@@ -37,22 +37,10 @@ app.use(methodOverride('_method'));
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
-    userID: "user2RandomID",
+    userID: "userRandomID",
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
-    userID: "user2RandomID",
-  },
-  xyBoGr: {
-    longURL: "https://www.bob.ca",
-    userID: "userRandomID",
-  },
-  PPPoGr: {
-    longURL: "https://www.dave.ca",
-    userID: "dave",
-  },
-  a7BoGr: {
-    longURL: "https://www.user.ca",
     userID: "user2RandomID",
   },
 };
@@ -70,6 +58,14 @@ const users = {
   },
 };
 
+const visits = [
+  {
+    shortURL:   'a7BoGr',
+    visitorId:  'user@example.com',
+    timestamp:  1667480237474,
+  }, 
+];
+
 ////////////////////////////////////////////////////////////////////////////////
 // Route Handlers - GET
 ////////////////////////////////////////////////////////////////////////////////
@@ -80,10 +76,27 @@ app.get("/", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
   if (!urlDatabase[shortURL]) { // Short url does not exist in database object
-    res.status(404).send('Sorry, this short URL doesn\'t exist\n<button onclick="history.back()">Back</button>');
+    res.status(404).send('Sorry, either this short URL doesn\'t exist or your long URL was not found (don\'t forget to include HTTP://)\n<button onclick="history.back()">Back</button>');
     return;
   }
   const longURL = urlDatabase[shortURL].longURL;
+  const timestamp = Date.now();
+  // get visitorId if it already exists, else generate a new one & set as cookie
+  let visitorId = '';
+  if (req.session.visitor_id) {
+    visitorId = req.session.visitor_id;
+    console.log('visitorId exists already', visitorId);
+  } else {
+    visitorId = generateRandomString(6);
+    req.session['visitor_id'] = visitorId;
+    console.log('new visitorId generated', visitorId);
+
+  }
+  visits.push({ // log visit to visits database array
+    shortURL,
+    visitorId,
+    timestamp,
+  });
   res.redirect(longURL);
 });
 
@@ -122,7 +135,7 @@ app.get("/urls/:id", (req, res) => {
   }
   const shortURL = req.params.id;
   if (!urlDatabase[shortURL]) { // Short url does not exist in database object
-    res.status(404).send(`Short URL ${shortURL} does not exist.\n`);
+    res.status(404).send(`Short URL ${shortURL} does not exist.\n<button onclick="history.back()">Back</button>`);
     return;
   }
   const urlOwnerId = urlDatabase[req.params.id].userID;
@@ -131,10 +144,25 @@ app.get("/urls/:id", (req, res) => {
     res.status(403).send('Sorry, you cannot edit a URL you did not create.\n<button onclick="history.back()">Back</button>');
     return;
   }
+
+  // filter visits for this short URL only
+  filteredVisits = visits.filter(visit => visit.shortURL === shortURL);
+
+  // get number of unique visitors to have visited the short URL
+  const visitors = [];
+  filteredVisits.forEach(visit => {
+    if (!visitors.includes(visit.visitorId)) {
+      visitors.push(visit.visitorId);
+    }
+  });
+
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL,
     user,
+    visits: filteredVisits,
+    totalVisits: filteredVisits.length,
+    uniqueVisitors: visitors.length,
   };
   res.render("urls_show", templateVars);
 });
@@ -231,7 +259,7 @@ app.post("/login", (req, res) => {
 // Route Handlers - PUT
 ////////////////////////////////////////////////////////////////////////////////
 
-// Update - modify long URL of existing resource
+// Update - Edit long URL of existing resource
 app.put("/urls/:id/update", (req, res) => {
   const shortURL = req.params.id;
   if (!urlDatabase[shortURL]) { // Short url does not exist in database object
