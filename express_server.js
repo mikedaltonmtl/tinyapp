@@ -2,8 +2,13 @@ const express = require("express");
 const morgan = require('morgan');
 const bcrypt = require("bcryptjs");
 const cookieSession = require('cookie-session');
-const { getUserByEmail } = require('./helpers.js');
 const methodOverride = require('method-override');
+const {
+  getUserByEmail,
+  generateRandomString,
+  urlsForUser
+} = require('./helpers.js');
+
 ////////////////////////////////////////////////////////////////////////////////
 // Configuration
 ////////////////////////////////////////////////////////////////////////////////
@@ -66,41 +71,16 @@ const users = {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// Functions
-////////////////////////////////////////////////////////////////////////////////
-
-// Create a random string of alphanumeric characters, of length 'nbChars'
-const generateRandomString = function(nbChars = 6) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < nbChars; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
-
-// Function returns urlDatabase filtered by userId (id)
-const urlsForUser = function(id) {
-  const userUrls = {};
-  for (const shortURL of Object.keys(urlDatabase)) {
-    if (urlDatabase[shortURL].userID === id) {
-      userUrls[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return userUrls;
-};
-
-////////////////////////////////////////////////////////////////////////////////
 // Route Handlers - GET
 ////////////////////////////////////////////////////////////////////////////////
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/login");
 });
 
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
   if (!urlDatabase[shortURL]) { // Short url does not exist in database object
-    res.send('Sorry, this short URL doesn\'t exist\n<button onclick="history.back()">Back</button>');
+    res.status(404).send('Sorry, this short URL doesn\'t exist\n<button onclick="history.back()">Back</button>');
     return;
   }
   const longURL = urlDatabase[shortURL].longURL;
@@ -110,7 +90,7 @@ app.get("/u/:id", (req, res) => {
 app.get("/login", (req, res) => {
   const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   const templateVars = { user };
-  if (user) { // user already logged-in, redirect to index
+  if (user) { // user already logged-in
     res.redirect("/urls");
   }
   res.render("urls_login", templateVars);
@@ -119,7 +99,7 @@ app.get("/login", (req, res) => {
 app.get("/register", (req, res) => {
   const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   const templateVars = { user };
-  if (user) { // user already logged-in, redirect to index
+  if (user) { // user already logged-in
     res.redirect("/urls");
   }
   res.render("urls_register", templateVars);
@@ -137,7 +117,7 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   if (!user) { // user NOT logged-in, do not allow
-    res.send('Please <a href="/login">log-in</a> or <a href="/register">register</a> to continue.');
+    res.status(401).send('Please <a href="/login">log-in</a> or <a href="/register">register</a> to continue.');
     return;
   }
   const shortURL = req.params.id;
@@ -148,7 +128,7 @@ app.get("/urls/:id", (req, res) => {
   const urlOwnerId = urlDatabase[req.params.id].userID;
   const cookieUserId = user.id;
   if (urlOwnerId !== cookieUserId) { // user is not owner of short URL
-    res.send('Sorry, you cannot edit a URL you did not create.\n<button onclick="history.back()">Back</button>');
+    res.status(403).send('Sorry, you cannot edit a URL you did not create.\n<button onclick="history.back()">Back</button>');
     return;
   }
   const templateVars = {
@@ -162,10 +142,10 @@ app.get("/urls/:id", (req, res) => {
 app.get("/urls", (req, res) => {
   const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   if (!user) { // user is not logged in
-    res.send('Please <a href="/login">log-in</a> or <a href="/register">register</a> to continue.');
+    res.status(401).send('Please <a href="/login">log-in</a> or <a href="/register">register</a> to continue.');
     return;
   }
-  const urls = urlsForUser(user.id);
+  const urls = urlsForUser(user.id, urlDatabase);
   const templateVars = {
     urls,
     user,
@@ -177,19 +157,21 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
 ////////////////////////////////////////////////////////////////////////////////
 // Route Handlers - POST
 ////////////////////////////////////////////////////////////////////////////////
+
+// Logout - clear session
+app.post("/logout", (req, res) => {
+  req.session = null;
+  res.redirect("/login");
+});
 
 // Create - add new URL to database object
 app.post("/urls", (req, res) => {
   const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
   if (!user) { // user NOT logged-in, do not allow
-    res.send('Please <a href="/login">log-in</a> or <a href="/register">register</a> to add a URL');
+    res.status(401).send('Please <a href="/login">log-in</a> or <a href="/register">register</a> to add a URL');
     return;
   }
   // user IS logged in, add new URL
@@ -201,69 +183,16 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// Delete - remove URL from database object
-app.post("/urls/:id/delete", (req, res) => {
-  const shortURL = req.params.id;
-  if (!urlDatabase[shortURL]) { // Short url does not exist in database object
-    res.status(404).send(`Short URL ${shortURL} does not exist.\n`);
-    return;
-  }
-  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
-  if (!user) { // user NOT logged-in, do not allow
-    res.status(401).send('You must log in to remove a URL\n');
-    return;
-  }
-  const urlOwnerId = urlDatabase[req.params.id].userID;
-  const cookieUserId = user.id;
-  if (urlOwnerId !== cookieUserId) { // user is not owner of short URL
-    res.status(403).send('Sorry, you cannot delete a URL you did not create.\n');
-    return;
-  }
-  delete urlDatabase[shortURL];
-  res.redirect("/urls");
-});
-
-// Update - modify long URL of existing resource
-app.post("/urls/:id/update", (req, res) => {
-  const shortURL = req.params.id;
-  if (!urlDatabase[shortURL]) { // Short url does not exist in database object
-    res.status(404).send(`Short URL ${shortURL} does not exist.\n`);
-    return;
-  }
-  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
-  if (!user) { // user NOT logged-in, do not allow
-    res.status(401).send('You must log in to edit a URL\n');
-    return;
-  }
-  const urlOwnerId = urlDatabase[req.params.id].userID;
-  const cookieUserId = user.id;
-  if (urlOwnerId !== cookieUserId) { // user is not owner of short URL
-    res.status(403).send('Sorry, you cannot edit a URL you did not create.\n');
-    return;
-  }
-  const newLongURL = req.body.longURL;
-  urlDatabase[shortURL].longURL = newLongURL;
-  res.redirect("/urls");
-});
-
-// Logout - clear session
-app.post("/logout", (req, res) => {
-  req.session = null;
-  res.redirect("/login");
-});
-
 // Register - create new user
 app.post("/register", (req, res) => {
   // return status 400 if email or password fields are blank
   if (req.body['email'] === "" || req.body['password'] === "") {
-    res.status(400);
-    res.send('Please provide an email & password\n<button onclick="history.back()">Back</button>');
+    res.status(400).send('Please provide an email & password\n<button onclick="history.back()">Back</button>');
     return;
   }
   // return status 400 if email already exists in users object
   if (getUserByEmail(req.body['email'], users) !== null) {
-    res.status(400);
-    res.send('Email already exists\n<button onclick="history.back()">Back</button>');
+    res.status(400).send('Email already exists\n<button onclick="history.back()">Back</button>');
     return;
   }
   // add user to user database object
@@ -285,18 +214,69 @@ app.post("/login", (req, res) => {
   const user = getUserByEmail(req.body['email'], users);
   // return status 403 if email not found in users object
   if (user === null) {
-    res.status(403);
-    res.send('Email cannot be found\n<button onclick="history.back()">Back</button>');
+    res.status(403).send('Email cannot be found\n<button onclick="history.back()">Back</button>');
     return;
   }
   // return status 403 if email exists, but password does not match
   if (!bcrypt.compareSync(req.body['password'], user.password)) {
-    res.status(403);
-    res.send('Incorrect password\n<button onclick="history.back()">Back</button>');
+    res.status(403).send('Incorrect password\n<button onclick="history.back()">Back</button>');
     return;
   }
   // set cookie for logged in user
   req.session['user_id'] = user.id;
+  res.redirect("/urls");
+});
+
+////////////////////////////////////////////////////////////////////////////////
+// Route Handlers - PUT
+////////////////////////////////////////////////////////////////////////////////
+
+// Update - modify long URL of existing resource
+app.put("/urls/:id/update", (req, res) => {
+  const shortURL = req.params.id;
+  if (!urlDatabase[shortURL]) { // Short url does not exist in database object
+    res.status(404).send(`Short URL ${shortURL} does not exist.\n`);
+    return;
+  }
+  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
+  if (!user) { // user NOT logged-in, do not allow
+    res.status(401).send('You must log in to edit a URL\n');
+    return;
+  }
+  const urlOwnerId = urlDatabase[req.params.id].userID;
+  const cookieUserId = user.id;
+  if (urlOwnerId !== cookieUserId) { // user is not owner of short URL
+    res.status(403).send('Sorry, you cannot edit a URL you did not create.\n');
+    return;
+  }
+  const newLongURL = req.body.longURL;
+  urlDatabase[shortURL].longURL = newLongURL;
+  res.redirect("/urls");
+});
+
+////////////////////////////////////////////////////////////////////////////////
+// Route Handlers - DELETE
+////////////////////////////////////////////////////////////////////////////////
+
+// Delete - remove URL from database object
+app.delete("/urls/:id/delete", (req, res) => {
+  const shortURL = req.params.id;
+  if (!urlDatabase[shortURL]) { // Short url does not exist in database object
+    res.status(404).send(`Short URL ${shortURL} does not exist.\n`);
+    return;
+  }
+  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
+  if (!user) { // user NOT logged-in, do not allow
+    res.status(401).send('You must log in to remove a URL\n');
+    return;
+  }
+  const urlOwnerId = urlDatabase[req.params.id].userID;
+  const cookieUserId = user.id;
+  if (urlOwnerId !== cookieUserId) { // user is not owner of short URL
+    res.status(403).send('Sorry, you cannot delete a URL you did not create.\n');
+    return;
+  }
+  delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
 
