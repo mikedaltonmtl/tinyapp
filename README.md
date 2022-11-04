@@ -10,18 +10,18 @@ This project is part of my learnings at Lighthouse Labs.
 
 ## Final Product
 
-!["Individual Short URL Page with Analytics"](./images/editUrl.png)
-!["List of all users URLs"](./images/usersUrls.png)
+!["Individual Short URL Page with Analytics"](./docs/edit-url-page.png)
+!["List of all users URLs"](./docs/urls-page.png)
 
 ## Dependencies
 
-- Node.js
-- Express
-- EJS
-- bcryptjs
-- cookie-session
-- method-override
-- morgan
+* Node.js
+* Express
+* EJS
+* bcryptjs
+* cookie-session
+* method-override
+* morgan
 
 ## Usage
 
@@ -31,9 +31,11 @@ The web site is currently configured as follows:
 
 * Port: 8080.
 
-* From the command-line prompt at the tinyapp directory, initialize the web server with:
-  
-  > npm start
+## Getting Started
+
+* Install all dependencies (using the `npm install` command).
+
+* Run the development web server using either the `node express_server.js` or `npm start` command.
 
 ## Documentation
 
