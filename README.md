@@ -1,10 +1,27 @@
 # TinyApp
 
-TinyApp is an HTTP web server that shortens URLs. Using Express as it's template engine, the site gives users the ability to create password protected accounts which they can log in to and out of.  Short URLs can be created, deleted and updated, while analytics of their use are logged.
+TinyApp is a full stack web application built with Node and Express that allows users to shorten long URLs (à la bit.ly).
+
+Using Express as it's template engine, the site gives users the ability to create password protected accounts which they can log in to and out of.  Short URLs can be created, deleted and updated, while analytics of each short URL use are logged.
 
 ## Purpose
 
-This project is part of my learnings at Lighthouse Labs. 
+This project is part of my learnings at Lighthouse Labs.
+
+## Final Product
+
+!["Individual Short URL Page with Analytics"](./images/editUrl.png)
+!["List of all users URLs"](./images/usersUrls.png)
+
+## Dependencies
+
+- Node.js
+- Express
+- EJS
+- bcryptjs
+- cookie-session
+- method-override
+- morgan
 
 ## Usage
 
