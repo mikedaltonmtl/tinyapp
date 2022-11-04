@@ -10,7 +10,13 @@ This project is part of my learnings at Lighthouse Labs.
 
 ## Final Product
 
+Screenshot of an individual Short URL page, showing visitor analytics:
+
 !["Individual Short URL Page with Analytics"](./docs/edit-url-page.png)
+
+
+Screenshot the URLs page, showing all URLs created by the the current user:
+
 !["List of all users URLs"](./docs/urls-page.png)
 
 ## Dependencies
