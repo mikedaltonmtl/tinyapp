@@ -46,8 +46,11 @@
     </div>
     <div class="card text-center">
       <div class="card-body">
-        <h4 class="card-title">Analytics for short URL <%= id %></h4>
-        Total number of visits: <%= totalVisits %> - Unique visitors: <%= uniqueVisitors %>
+        <h4 class="card-title">Analytics for short URL: <a href="/u/<%= id %>"><%= id %></a></h4>
+        <div>
+          Total number of visits: <%= totalVisits %> - Unique visitors: <%= uniqueVisitors %>
+        </div>
+        <div>This short URL was created: <%= creationDate %></div>
       </div>
     </div> 
     <table class="table table-hover table-sm" style="width: fit-content; margin: 0 auto">

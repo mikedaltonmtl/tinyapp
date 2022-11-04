@@ -38,10 +38,12 @@ const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
     userID: "userRandomID",
+    timeCreated: 1667480237474
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
     userID: "user2RandomID",
+    timeCreated: 1667480237574
   },
 };
 
@@ -155,9 +157,11 @@ app.get("/urls/:id", (req, res) => {
       visitors.push(visit.visitorId);
     }
   });
+  const creationDate = new Date(urlDatabase[req.params.id].timeCreated).toLocaleDateString();
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL,
+    creationDate,
     user,
     visits: filteredVisits,
     totalVisits: filteredVisits.length,
@@ -205,6 +209,7 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = {
     longURL: req.body['longURL'],
     userID: user.id,
+    timeCreated: Date.now()
   };
   res.redirect(`/urls/${shortURL}`);
 });
