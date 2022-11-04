@@ -13,7 +13,7 @@ const {
 // Configuration
 ////////////////////////////////////////////////////////////////////////////////
 const app = express();
-const PORT = 8080; // Default port 8080
+const PORT = 8080;
 
 app.set("view engine", "ejs");
 app.set('trust proxy', 1);
@@ -70,7 +70,12 @@ const visits = [
 // Route Handlers - GET
 ////////////////////////////////////////////////////////////////////////////////
 app.get("/", (req, res) => {
-  res.redirect("/login");
+  const user = req.session["user_id"] ? users[req.session["user_id"]] : false;
+  const templateVars = { user };
+  if (user) { // user already logged-in
+    res.redirect("/urls");
+  }
+  res.render("urls_login", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
@@ -85,12 +90,9 @@ app.get("/u/:id", (req, res) => {
   let visitorId = '';
   if (req.session.visitor_id) {
     visitorId = req.session.visitor_id;
-    console.log('visitorId exists already', visitorId);
   } else {
     visitorId = generateRandomString(6);
     req.session['visitor_id'] = visitorId;
-    console.log('new visitorId generated', visitorId);
-
   }
   visits.push({ // log visit to visits database array
     shortURL,
@@ -199,8 +201,7 @@ app.post("/urls", (req, res) => {
     res.status(401).send('Please <a href="/login">log-in</a> or <a href="/register">register</a> to add a URL');
     return;
   }
-  // user IS logged in, add new URL
-  const shortURL = generateRandomString(6);
+  const shortURL = generateRandomString(6); // user IS logged in, add new URL
   urlDatabase[shortURL] = {
     longURL: req.body['longURL'],
     userID: user.id,
@@ -221,7 +222,7 @@ app.post("/register", (req, res) => {
     return;
   }
   // add user to user database object
-  const id = generateRandomString(6); // Generate a new (random) user id
+  const id = generateRandomString(6);
   const email = req.body['email'];
   const password = req.body['password'];
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -253,11 +254,11 @@ app.post("/login", (req, res) => {
 });
 
 ////////////////////////////////////////////////////////////////////////////////
-// Route Handlers - PATCH
+// Route Handlers - PUT
 ////////////////////////////////////////////////////////////////////////////////
 
 // Update - Edit long URL of existing resource
-app.patch("/urls/:id", (req, res) => {
+app.put("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   if (!urlDatabase[shortURL]) { // Short url does not exist in database object
     res.status(404).send(`Short URL ${shortURL} does not exist.\n`);
