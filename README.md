@@ -1,6 +1,6 @@
 # TinyApp
 
-In it's current state, TinyApp is an HTTP web server that shortens URLs. Using Express as it's template engine, the site gives users the ability to create password protected accounts which they can log to and out of.  Short URLs can be created, deleted and updated.
+TinyApp is an HTTP web server that shortens URLs. Using Express as it's template engine, the site gives users the ability to create password protected accounts which they can log in to and out of.  Short URLs can be created, deleted and updated, while analytics of their use are logged.
 
 ## Purpose
 
@@ -14,7 +14,7 @@ The web site is currently configured as follows:
 
 * Port: 8080.
 
-* From the command-line prompt, initialize the web server with:
+* From the command-line prompt at the tinyapp directory, initialize the web server with:
   
   > npm start
 
@@ -22,9 +22,15 @@ The web site is currently configured as follows:
 
 The following files have been developed for the web site:
 
-* `express_server.js`: provides the web server functionality and also a pseudo 'back-end' database of objects.  The configuration, helper functions, route handlers and listeners are contained within.
+* `express_server.js`: provides the web server functionality and also a pseudo 'back-end' database of objects.  The configuration, route handlers and listeners are contained within.
 
-### Views
+* `helpers.js`: contains the helper functions called within the routes of the express_server.js module.
+
+### test
+
+* `helpersTest.js`: unit testing of the helper functions using Mocha and Chai.
+
+### views
 
 * `urls_index.ejs`: shows a list of the current short URLs and their associated long URLs, with options to edit or delete these resources.
 
@@ -36,6 +42,6 @@ The following files have been developed for the web site:
 
 * `urls_show.ejs`: a user may edit a long URL here and test the short URL link, which will redirect the user to the web site specified by the long URL.
 
-### Views/partials
+### views/partials
 
 * `_header.ejs`: contains the navigation links to the site.  When a user is signed-in, it will show 'logged in as <user's email address>' with a button to log out if desired.
