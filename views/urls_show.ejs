@@ -29,7 +29,7 @@
       </div>
       <div class="card-footer text-muted">
         <h3>Edit</h3>
-        <form action="/urls/<%= id %>/update?_method=PUT" method="POST">
+        <form action="/urls/<%= id %>?_method=PATCH" method="POST">
           <div class="form-group mb-2">
             <label for="longURL">New URL:</label>
             <input

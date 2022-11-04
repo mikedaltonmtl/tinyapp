@@ -16,6 +16,7 @@ const app = express();
 const PORT = 8080; // Default port 8080
 
 app.set("view engine", "ejs");
+app.set('trust proxy', 1);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Middleware
@@ -26,7 +27,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2'],
-  // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 app.use(methodOverride('_method'));
@@ -63,7 +63,7 @@ const visits = [
     shortURL:   'a7BoGr',
     visitorId:  'user@example.com',
     timestamp:  1667480237474,
-  }, 
+  },
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -144,18 +144,15 @@ app.get("/urls/:id", (req, res) => {
     res.status(403).send('Sorry, you cannot edit a URL you did not create.\n<button onclick="history.back()">Back</button>');
     return;
   }
-
-  // filter visits for this short URL only
-  filteredVisits = visits.filter(visit => visit.shortURL === shortURL);
-
-  // get number of unique visitors to have visited the short URL
+  // Analytics...
+  const filteredVisits = visits.filter(visit => visit.shortURL === shortURL);
+  // gather IDs of unique visitors to have visited the short URL
   const visitors = [];
   filteredVisits.forEach(visit => {
     if (!visitors.includes(visit.visitorId)) {
       visitors.push(visit.visitorId);
     }
   });
-
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL,
@@ -256,11 +253,11 @@ app.post("/login", (req, res) => {
 });
 
 ////////////////////////////////////////////////////////////////////////////////
-// Route Handlers - PUT
+// Route Handlers - PATCH
 ////////////////////////////////////////////////////////////////////////////////
 
 // Update - Edit long URL of existing resource
-app.put("/urls/:id/update", (req, res) => {
+app.patch("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   if (!urlDatabase[shortURL]) { // Short url does not exist in database object
     res.status(404).send(`Short URL ${shortURL} does not exist.\n`);
@@ -287,7 +284,7 @@ app.put("/urls/:id/update", (req, res) => {
 ////////////////////////////////////////////////////////////////////////////////
 
 // Delete - remove URL from database object
-app.delete("/urls/:id/delete", (req, res) => {
+app.delete("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   if (!urlDatabase[shortURL]) { // Short url does not exist in database object
     res.status(404).send(`Short URL ${shortURL} does not exist.\n`);
